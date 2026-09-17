@@ -54,7 +54,15 @@ Post-training quantization (PTQ) applies that transformation after the model
 has already been trained. This tutorial uses a data-free FP8 dynamic scheme,
 so it does not require a calibration dataset.
 
-### Quantization granularity
+![A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4, showing fewer bits per value](assets/quantization-precision.svg)
+
+The sizes in this diagram are approximate storage comparisons for the values
+themselves. Real checkpoints also contain scales, metadata, and layers that may
+remain at a higher precision. This tutorial focuses on FP8 dynamic
+quantization, which sits in the middle of the precision tradeoff.
+
+<details>
+<summary>Optional deeper dive: quantization granularity</summary>
 
 Granularity describes how much data shares one quantization scale. A single
 scale for a large tensor is simple, but it may fit some values poorly. Smaller
@@ -66,6 +74,8 @@ work for the runtime.
 The diagram is a teaching aid rather than a dump of every tensor in the model.
 The exact scales and tensor mappings are created by LLM Compressor and recorded
 in the compressed-tensors metadata that vLLM loads.
+
+</details>
 
 ### Why model-free PTQ?
 

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 450" role="img" aria-labelledby="title description">
+  <title id="title">Quantization lowers numerical precision</title>
+  <desc id="description">A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4. Each step uses fewer bits per value and therefore less relative storage.</desc>
+  <rect x="1" y="1" width="1198" height="448" rx="24" fill="#ffffff" stroke="#d2d2d2" stroke-width="2"/>
+  <text x="56" y="52" fill="#ee0000" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="1.5">THE BASIC IDEA</text>
+  <text x="56" y="91" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">Fewer bits mean a smaller representation</text>
+  <text x="56" y="119" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="16">Quantization trades numerical precision for lower memory use and potential speedups.</text>
+  <line x1="56" y1="143" x2="1144" y2="143" stroke="#ee0000" stroke-width="3"/>
+  <text x="56" y="176" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">MORE PRECISION</text>
+  <text x="1144" y="176" text-anchor="end" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">LESS PRECISION</text>
+  <line x1="150" y1="184" x2="1050" y2="184" stroke="#b7b7b7" stroke-width="2" stroke-linecap="round"/>
+  <path d="M1050 184l-11-7m11 7-11 7" fill="none" stroke="#b7b7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g transform="translate(56 205)">
+    <rect width="250" height="184" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">FP32</text>
+    <text x="24" y="63" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="14">32 bits per value</text>
+    <g transform="translate(24 84)">
+      <rect width="202" height="24" rx="5" fill="#151515"/>
+      <g fill="#ee0000">
+        <rect x="4" y="4" width="8" height="16" rx="2"/><rect x="17" y="4" width="8" height="16" rx="2"/><rect x="30" y="4" width="8" height="16" rx="2"/><rect x="43" y="4" width="8" height="16" rx="2"/><rect x="56" y="4" width="8" height="16" rx="2"/><rect x="69" y="4" width="8" height="16" rx="2"/><rect x="82" y="4" width="8" height="16" rx="2"/><rect x="95" y="4" width="8" height="16" rx="2"/><rect x="108" y="4" width="8" height="16" rx="2"/><rect x="121" y="4" width="8" height="16" rx="2"/><rect x="134" y="4" width="8" height="16" rx="2"/><rect x="147" y="4" width="8" height="16" rx="2"/><rect x="160" y="4" width="8" height="16" rx="2"/><rect x="173" y="4" width="8" height="16" rx="2"/><rect x="186" y="4" width="8" height="16" rx="2"/>
+      </g>
+    </g>
+    <text x="24" y="150" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="14">Relative storage: ~100%</text>
+  </g>
+
+  <g transform="translate(324 205)">
+    <rect width="250" height="184" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">BF16 / FP16</text>
+    <text x="24" y="63" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="14">16 bits per value</text>
+    <g transform="translate(24 84)">
+      <rect width="202" height="24" rx="5" fill="#151515"/>
+      <g fill="#f26a6a">
+        <rect x="4" y="4" width="15" height="16" rx="2"/><rect x="24" y="4" width="15" height="16" rx="2"/><rect x="44" y="4" width="15" height="16" rx="2"/><rect x="64" y="4" width="15" height="16" rx="2"/><rect x="84" y="4" width="15" height="16" rx="2"/><rect x="104" y="4" width="15" height="16" rx="2"/><rect x="124" y="4" width="15" height="16" rx="2"/><rect x="144" y="4" width="15" height="16" rx="2"/><rect x="164" y="4" width="15" height="16" rx="2"/><rect x="184" y="4" width="14" height="16" rx="2"/>
+      </g>
+    </g>
+    <text x="24" y="150" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="14">Relative storage: ~50%</text>
+  </g>
+
+  <g transform="translate(592 205)">
+    <rect width="250" height="184" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">FP8</text>
+    <text x="24" y="63" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="14">8 bits per value</text>
+    <g transform="translate(24 84)">
+      <rect width="202" height="24" rx="5" fill="#151515"/>
+      <g fill="#ff9c9c">
+        <rect x="4" y="4" width="31" height="16" rx="2"/><rect x="39" y="4" width="31" height="16" rx="2"/><rect x="74" y="4" width="31" height="16" rx="2"/><rect x="109" y="4" width="31" height="16" rx="2"/><rect x="144" y="4" width="31" height="16" rx="2"/><rect x="179" y="4" width="19" height="16" rx="2"/>
+      </g>
+    </g>
+    <text x="24" y="150" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="14">Relative storage: ~25%</text>
+  </g>
+
+  <g transform="translate(860 205)">
+    <rect width="284" height="184" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">INT4</text>
+    <text x="24" y="63" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="14">4 bits per value</text>
+    <g transform="translate(24 84)">
+      <rect width="236" height="24" rx="5" fill="#151515"/>
+      <g fill="#ffcccc">
+        <rect x="4" y="4" width="52" height="16" rx="2"/><rect x="60" y="4" width="52" height="16" rx="2"/><rect x="116" y="4" width="52" height="16" rx="2"/><rect x="172" y="4" width="60" height="16" rx="2"/>
+      </g>
+    </g>
+    <text x="24" y="150" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="14">Relative storage: ~12.5%</text>
+  </g>
+</svg>
