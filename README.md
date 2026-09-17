@@ -95,18 +95,22 @@ target checkpoint created in this tutorial.
 
 Every computer needs:
 
-- Git, Python 3.10 or newer, and curl
+- Git and curl
 - Internet access for the first setup and model downloads
 - Enough memory and disk space for the original and compressed checkpoints
+
+The quantization command uses Docker or Podman for its dependencies when
+available. If neither is running, it creates an isolated Python environment
+instead; that fallback needs Python 3.10 or newer.
 
 The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU path can be attempted locally | Native vLLM Metal | Not advertised until validated on Metal |
-| Linux with NVIDIA | CPU or CUDA | CUDA container | CUDA container; primary path for this part |
-| Linux with AMD | CPU or supported accelerator | ROCm container | Try with the current vLLM ROCm support and verify locally |
-| Linux with Intel | CPU or supported accelerator | XPU container | Try with the current vLLM XPU support and verify locally |
+| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Not advertised until validated on Metal |
+| Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
+| Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
+| Linux with Intel | CPU container or local fallback | XPU container | Try with the current vLLM XPU support and verify locally |
 
 Linux container access must already work for the detected accelerator. NVIDIA
 users also need
@@ -118,59 +122,28 @@ The quantizer and the vLLM server are separate pieces. You can create the
 checkpoint on a CPU-only machine, copy it to a Linux GPU machine, and serve it
 there.
 
-## 1. Clone and install the quantizer
+## 1. Clone
 
 ```bash
 git clone https://github.com/red-hat-ai-dev/vLLM-zero-to-hero-pt2.git
 cd vLLM-zero-to-hero-pt2
-
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
 ```
-
-Keep the virtual environment activated while you create the compressed
-checkpoint. You can use `deactivate` after that step.
 
 ## 2. Create an optimized checkpoint
 
-The default command uses model-free PTQ on the CPU and writes the output under
-`artifacts/`. The original model is downloaded from Hugging Face; the model
-weights are not added to this repository.
+One command creates the optimized checkpoint. On the first run, the script
+builds a small quantizer image with the required dependencies. Later runs reuse
+the image and the Hugging Face cache. The original model is downloaded from
+Hugging Face; model weights are not added to this repository.
 
 ```bash
-python quantize.py \
-  --model-id Qwen/Qwen3-4B \
-  --output-dir artifacts/Qwen3-4B-FP8-Dynamic \
-  --device cpu \
-  --max-workers 4
+./quantize.sh
 ```
 
-If you have a supported CUDA device and want to accelerate the conversion:
-
-```bash
-python quantize.py \
-  --model-id Qwen/Qwen3-4B \
-  --output-dir artifacts/Qwen3-4B-FP8-Dynamic \
-  --device cuda:0 \
-  --max-workers 8
-```
-
-The script refuses to overwrite an existing output directory. This protects a
-checkpoint that may have taken a long time to create. Choose a new output path
-if you want to try a different setting.
-
-This is a real quantization run, not a configuration change. LLM Compressor
-writes new Safetensors files and compressed-tensors metadata. You can inspect
-that evidence directly:
-
-```bash
-python inspect_checkpoint.py --path artifacts/Qwen3-4B-FP8-Dynamic
-```
-
-The output shows the generated checkpoint size and confirms that its
-`quantization_config` uses the `compressed-tensors` format.
+The command runs the real `model_free_ptq` pipeline on the CPU. It writes new
+Safetensors files and compressed-tensors metadata, then prints the generated
+file count, size, format, and location. It intentionally does not overwrite an
+existing checkpoint.
 
 For a quick path that skips local conversion, use the published Red Hat AI
 checkpoint in the next step by setting `OPTIMIZED_MODEL`.
@@ -255,18 +228,25 @@ NUM_SPECULATIVE_TOKENS=3 \
 ./run.sh speculative
 ```
 
-## 6. Make a small comparison
+## 6. Compare the result
 
-With one of the servers running, measure a few identical requests:
+Send the same request to the baseline, optimized, and speculative servers. Pay
+attention to whether the responses remain sensible and how the experience
+changes on your hardware. Part 3 will cover controlled endpoint benchmarking
+in depth with GuideLLM.
 
 ```bash
-python measure.py --label baseline --model qwen3-4b --runs 3
+curl http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "qwen3-4b",
+    "messages": [
+      {"role": "user", "content": "Explain why quantization can improve inference efficiency."}
+    ]
+  }'
 ```
 
-Stop the server, start `optimized` or `speculative`, and repeat the command
-with a different label. This is a small learning aid, not a replacement for a
-controlled benchmark. Part 3 will cover endpoint benchmarking in depth with
-GuideLLM.
+Stop the server, start `optimized` or `speculative`, and repeat the command.
 
 ## Stop and clean up
 
@@ -282,16 +262,16 @@ To remove the vLLM-managed model cache and temporary state, use:
 ./cleanup.sh
 ```
 
-The cleanup script does not remove your virtual environment or anything under
-`artifacts/`. Generated checkpoints are valuable and can be reused by the next
-run.
+The cleanup script does not remove the local quantizer environment or anything
+under `artifacts/`. Generated checkpoints are valuable and can be reused by the
+next run.
 
 ## If something goes wrong
 
 - **The quantizer says the output already exists:** choose a new output path;
   the script intentionally does not overwrite checkpoints.
-- **CPU quantization is slow:** that is expected for a full checkpoint. Use a
-  supported CUDA device with `--device cuda:0` if available.
+- **Quantization is slow:** that is expected for a full checkpoint. The command
+  is CPU-first so it can be followed without a GPU.
 - **A container does not start:** confirm Docker or Podman is running and that
   the accelerator is available inside the container engine.
 - **The optimized model does not load on a platform:** compressed-tensors and
@@ -300,7 +280,7 @@ run.
 - **Speculative decoding is rejected:** confirm that the target is Qwen3-4B and
   that the speculator is the matching Red Hat AI artifact.
 - **Port 8000 is busy:** set another port, for example
-  `PORT=8001 ./run.sh baseline`, and pass the same port to `measure.py`.
+  `PORT=8001 ./run.sh baseline`, then use port 8001 in your curl request.
 
 ## Need help?
 
