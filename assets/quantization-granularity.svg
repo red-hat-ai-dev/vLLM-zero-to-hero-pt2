@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
+  <title id="title">Quantization granularity</title>
+  <desc id="description">Four conceptual matrices compare one scale per tensor, one scale per channel, one scale per token, and one scale per block.</desc>
+  <rect x="1" y="1" width="1198" height="518" rx="24" fill="#ffffff" stroke="#d2d2d2" stroke-width="2"/>
+  <text x="56" y="52" fill="#ee0000" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="1.5">WHY GRANULARITY MATTERS</text>
+  <text x="56" y="91" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">How many values share one scale?</text>
+  <text x="56" y="119" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="16">Smaller groups can preserve more detail, while adding more scale metadata.</text>
+  <line x1="56" y1="143" x2="1144" y2="143" stroke="#ee0000" stroke-width="3"/>
+
+  <g transform="translate(56 174)">
+    <rect width="250" height="286" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Per tensor</text>
+    <text x="24" y="62" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13">One scale for everything</text>
+    <g transform="translate(62 91)">
+      <rect width="126" height="126" rx="4" fill="#151515"/>
+      <g fill="#ee0000">
+        <rect x="3" y="3" width="120" height="120" rx="2"/>
+      </g>
+      <g fill="#ffb3b3">
+        <rect x="9" y="9" width="52" height="49"/><rect x="66" y="9" width="51" height="49"/>
+        <rect x="9" y="65" width="52" height="52"/><rect x="66" y="65" width="51" height="52"/>
+      </g>
+      <text x="63" y="142" text-anchor="middle" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="12">1 scale</text>
+    </g>
+    <text x="24" y="256" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="13">Simple, but less adaptable</text>
+  </g>
+
+  <g transform="translate(324 174)">
+    <rect width="250" height="286" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Per channel</text>
+    <text x="24" y="62" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13">One scale for each row</text>
+    <g transform="translate(62 91)">
+      <rect width="126" height="126" rx="4" fill="#151515"/>
+      <rect x="3" y="3" width="120" height="27" fill="#ee0000"/><rect x="3" y="33" width="120" height="27" fill="#f26a6a"/>
+      <rect x="3" y="63" width="120" height="27" fill="#ff9c9c"/><rect x="3" y="93" width="120" height="30" fill="#ffcccc"/>
+      <text x="63" y="142" text-anchor="middle" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="12">4 scales</text>
+    </g>
+    <text x="24" y="256" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="13">Adapts to output channels</text>
+  </g>
+
+  <g transform="translate(592 174)">
+    <rect width="250" height="286" rx="16" fill="#f6f6f6" stroke="#d2d2d2" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Per token</text>
+    <text x="24" y="62" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13">One scale for each token</text>
+    <g transform="translate(62 91)">
+      <rect width="126" height="126" rx="4" fill="#151515"/>
+      <rect x="3" y="3" width="120" height="27" fill="#ee0000"/><rect x="3" y="33" width="120" height="27" fill="#f26a6a"/>
+      <rect x="3" y="63" width="120" height="27" fill="#ff9c9c"/><rect x="3" y="93" width="120" height="30" fill="#ffcccc"/>
+      <g stroke="#ffffff" stroke-width="2"><path d="M34 3v120M65 3v120M96 3v120"/></g>
+      <text x="63" y="142" text-anchor="middle" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="12">per token</text>
+    </g>
+    <text x="24" y="256" fill="#767676" font-family="Arial, Helvetica, sans-serif" font-size="13">Useful for dynamic activations</text>
+  </g>
+
+  <g transform="translate(860 174)">
+    <rect width="284" height="286" rx="16" fill="#fff6f6" stroke="#ee0000" stroke-width="2"/>
+    <text x="24" y="38" fill="#151515" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Per block</text>
+    <text x="24" y="62" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="13">One scale for each small group</text>
+    <g transform="translate(79 91)">
+      <rect width="126" height="126" rx="4" fill="#151515"/>
+      <g fill="#ee0000"><rect x="3" y="3" width="58" height="58"/><rect x="65" y="3" width="58" height="58"/></g>
+      <g fill="#f26a6a"><rect x="3" y="65" width="58" height="58"/><rect x="65" y="65" width="58" height="58"/></g>
+      <g stroke="#ffffff" stroke-width="3"><path d="M63 3v120M3 63h120"/></g>
+      <text x="63" y="142" text-anchor="middle" fill="#565656" font-family="Arial, Helvetica, sans-serif" font-size="12">4 block scales</text>
+    </g>
+    <text x="24" y="256" fill="#ee0000" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">More detail, more metadata</text>
+  </g>
+</svg>
