@@ -300,8 +300,7 @@ run.
 - **Speculative decoding is rejected:** confirm that the target is Qwen3-4B and
   that the speculator is the matching Red Hat AI artifact.
 - **Port 8000 is busy:** set another port, for example
-  `PORT=8001 ./run.sh baseline`, and pass the same port to `ask.sh` and
-  `measure.py`.
+  `PORT=8001 ./run.sh baseline`, and pass the same port to `measure.py`.
 
 ## Need help?
 
