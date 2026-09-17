@@ -18,7 +18,6 @@ vLLM, and add a draft model for speculative decoding.
 ## What you will learn
 
 - What quantization changes inside a model
-- Why quantization granularity matters
 - How to use LLM Compressor's model-free PTQ pathway
 - How to serve a baseline model and a compressed model with vLLM
 - How speculative decoding uses a draft model and a target model together
@@ -60,22 +59,6 @@ The sizes in this diagram are approximate storage comparisons for the values
 themselves. Real checkpoints also contain scales, metadata, and layers that may
 remain at a higher precision. This tutorial focuses on FP8 dynamic
 quantization, which sits in the middle of the precision tradeoff.
-
-<details>
-<summary>Optional deeper dive: quantization granularity</summary>
-
-Granularity describes how much data shares one quantization scale. A single
-scale for a large tensor is simple, but it may fit some values poorly. Smaller
-groups can preserve more detail, at the cost of more scale metadata and more
-work for the runtime.
-
-![A conceptual comparison of quantization granularity: per-tensor, per-channel, per-token, and per-block](assets/quantization-granularity.svg)
-
-The diagram is a teaching aid rather than a dump of every tensor in the model.
-The exact scales and tensor mappings are created by LLM Compressor and recorded
-in the compressed-tensors metadata that vLLM loads.
-
-</details>
 
 ### Why model-free PTQ?
 
@@ -209,7 +192,14 @@ accelerator container.
 When the API is ready, send a request from a second terminal:
 
 ```bash
-./ask.sh "Explain quantization in three sentences."
+curl http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "qwen3-4b",
+    "messages": [
+      {"role": "user", "content": "Explain quantization in three sentences."}
+    ]
+  }'
 ```
 
 The API is also available at `http://127.0.0.1:8000/v1` for any OpenAI-
