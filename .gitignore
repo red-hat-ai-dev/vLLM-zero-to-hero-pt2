@@ -1,5 +1,6 @@
 .venv/
 .venv-pt2-quantizer/
+.venv-pt2-quantizer-*/
 __pycache__/
 *.py[cod]
 .DS_Store

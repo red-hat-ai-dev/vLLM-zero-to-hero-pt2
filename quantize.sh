@@ -5,7 +5,6 @@ repo_root="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 image="vllm-zero-to-hero-pt2-quantizer:local"
 llm_compressor_version="0.13.0"
 hf_home="${HF_HOME:-${HOME:-}/.cache/huggingface}"
-venv="$repo_root/.venv-pt2-quantizer"
 engine=""
 
 error() {
@@ -63,12 +62,25 @@ fi
 
 echo "No running Docker or Podman was found."
 echo "Using an isolated local Python environment instead."
-if [ ! -x "$venv/bin/python" ]; then
-  if ! command -v python3 >/dev/null 2>&1; then
-    error "python3 is required when Docker and Podman are unavailable."
-    exit 1
+python_command=""
+for candidate in python3.13 python3.12 python3.11 python3.10; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    python_command="$candidate"
+    break
   fi
-  python3 -m venv "$venv"
+done
+
+if [ -z "$python_command" ]; then
+  error "Python 3.10 through 3.13 is required when Docker and Podman are unavailable."
+  error "Install a supported Python version or start Docker/Podman, then rerun this command."
+  exit 1
+fi
+
+python_version="$($python_command -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
+venv="$repo_root/.venv-pt2-quantizer-$python_version"
+
+if [ ! -x "$venv/bin/python" ]; then
+  "$python_command" -m venv "$venv"
   "$venv/bin/python" -m pip install --upgrade pip
   "$venv/bin/python" -m pip install "llmcompressor==$llm_compressor_version"
 fi

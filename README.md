@@ -101,13 +101,13 @@ Every computer needs:
 
 The quantization command uses Docker or Podman for its dependencies when
 available. If neither is running, it creates an isolated Python environment
-instead; that fallback needs Python 3.10 or newer.
+instead; that fallback needs Python 3.10 through 3.13.
 
 The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Not advertised until validated on Metal |
+| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Serve on a Linux GPU machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
 | Linux with Intel | CPU container or local fallback | XPU container | Try with the current vLLM XPU support and verify locally |
