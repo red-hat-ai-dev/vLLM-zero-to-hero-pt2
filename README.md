@@ -110,9 +110,11 @@ The platform paths are:
 | Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Serve on a Linux GPU machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
-| Linux with Intel | CPU container or local fallback | XPU container | Try with the current vLLM XPU support and verify locally |
+| Linux with Intel | CPU container or local fallback | XPU container | Serve on a Linux GPU machine |
 
-Linux container access must already work for the detected accelerator. NVIDIA
+Linux container access must already work for the detected accelerator. The
+Intel XPU path is validated on Intel Arc Pro B-series GPUs, and the optimized
+and speculative paths are verified on NVIDIA hardware. NVIDIA
 users also need
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 configured for Docker or Podman. Windows users can follow the Linux path from

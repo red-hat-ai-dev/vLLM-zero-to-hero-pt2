@@ -260,6 +260,12 @@ prepare_optimized_model() {
 run_linux() {
   detect_accelerator
   echo "Detected Linux with $accelerator acceleration."
+  if [ "$accelerator" = "intel" ]; then
+    echo "Note: vLLM validates the Intel XPU path on Arc Pro B-series GPUs only."
+    if [ "$mode" != "baseline" ]; then
+      echo "The optimized and speculative paths are verified on NVIDIA GPUs and may not work on Intel."
+    fi
+  fi
   select_engine
   echo "Using $engine."
 
