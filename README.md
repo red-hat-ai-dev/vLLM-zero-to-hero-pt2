@@ -115,9 +115,9 @@ The platform paths are:
 Linux container access must already work for the detected accelerator. The
 Intel XPU path is validated on Intel Arc Pro B-series GPUs, and the optimized
 path is verified on NVIDIA hardware. On a Mac, speculative decoding uses the
-draft-model method with Qwen3-0.6B as the draft; it demonstrates the concept,
-but vLLM Metal's draft-model path is not yet faster than plain generation.
-NVIDIA users also need
+draft-model method with Qwen3-0.6B as the draft. This path is verified on
+Apple Silicon and demonstrates the concept, though it is not yet faster than
+plain generation. NVIDIA users also need
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 configured for Docker or Podman. Windows users can follow the Linux path from
 a compatible WSL2 environment.
