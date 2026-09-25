@@ -107,15 +107,17 @@ The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Serve on a Linux GPU machine |
+| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a Linux GPU machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
 | Linux with Intel | CPU container or local fallback | XPU container | Serve on a Linux GPU machine |
 
 Linux container access must already work for the detected accelerator. The
 Intel XPU path is validated on Intel Arc Pro B-series GPUs, and the optimized
-and speculative paths are verified on NVIDIA hardware. NVIDIA
-users also need
+path is verified on NVIDIA hardware. On a Mac, speculative decoding uses the
+draft-model method with Qwen3-0.6B as the draft; it demonstrates the concept,
+but vLLM Metal's draft-model path is not yet faster than plain generation.
+NVIDIA users also need
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 configured for Docker or Podman. Windows users can follow the Linux path from
 a compatible WSL2 environment.
@@ -221,6 +223,12 @@ instead:
 OPTIMIZED_MODEL=RedHatAI/Qwen3-4B-FP8-dynamic ./run.sh speculative
 ```
 
+On an Apple Silicon Mac, `./run.sh speculative` instead runs the baseline
+model with Qwen3-0.6B as the draft (the dspark speculator is not supported on
+vLLM Metal yet). The draft can be changed with `METAL_DRAFT_MODEL`. Only
+greedy requests are drafted on Metal, so set `"temperature": 0` in your
+requests to see speculation happen.
+
 The draft model can be changed with `SPECULATOR_MODEL` and the proposal length
 with `NUM_SPECULATIVE_TOKENS`:
 
@@ -242,11 +250,15 @@ curl http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "qwen3-4b",
+    "temperature": 0,
     "messages": [
       {"role": "user", "content": "Explain why quantization can improve inference efficiency."}
     ]
   }'
 ```
+
+Setting `"temperature": 0` matters on Metal, where only greedy requests are
+drafted; other requests run without speculation.
 
 Stop the server, start `optimized` or `speculative`, and repeat the command.
 
@@ -279,8 +291,9 @@ next run.
 - **The optimized model does not load on a platform:** compressed-tensors and
   hardware support can vary by vLLM release. Try the CUDA path first, then
   check the current vLLM support for your accelerator.
-- **Speculative decoding is rejected:** confirm that the target is Qwen3-4B and
-  that the speculator is the matching Red Hat AI artifact.
+- **Speculative decoding is rejected:** confirm that the target is Qwen3-4B
+  and that the draft matches it: the Red Hat AI dspark speculator on Linux,
+  Qwen3-0.6B on a Mac.
 - **Port 8000 is busy:** set another port, for example
   `PORT=8001 ./run.sh baseline`, then use port 8001 in your curl request.
 

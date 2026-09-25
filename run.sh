@@ -10,6 +10,7 @@ pid_file="$state_dir/metal.pid"
 log_file="$state_dir/metal.log"
 metal_venv="${VLLM_METAL_VENV:-$HOME/.venv-vllm-metal}"
 metal_model="${METAL_MODEL:-mlx-community/Qwen3-4B-4bit}"
+metal_draft_model="${METAL_DRAFT_MODEL:-Qwen/Qwen3-0.6B}"
 baseline_model="${BASELINE_MODEL:-Qwen/Qwen3-4B}"
 optimized_default="$repo_root/artifacts/Qwen3-4B-FP8-Dynamic"
 served_model="${MODEL_NAME:-qwen3-4b}"
@@ -375,8 +376,8 @@ run_macos() {
     *) error "Unknown accelerator: $requested"; usage; exit 1 ;;
   esac
 
-  if [ "$mode" != "baseline" ]; then
-    error "The $mode path is not advertised for vLLM Metal yet."
+  if [ "$mode" = "optimized" ]; then
+    error "The optimized path is not advertised for vLLM Metal yet."
     echo "Run the CPU quantization step on this Mac if desired, then serve the optimized checkpoint on Linux." >&2
     exit 1
   fi
@@ -409,10 +410,14 @@ run_macos() {
   install_metal
   echo "Starting vLLM Metal with $metal_model."
   : > "$log_file"
-  nohup "$metal_venv/bin/vllm" serve "$metal_model" \
+  set -- "$metal_venv/bin/vllm" serve "$metal_model" \
     --host 127.0.0.1 --port "$port" \
-    --served-model-name "$served_model" --max-model-len 8192 \
-    >"$log_file" 2>&1 &
+    --served-model-name "$served_model" --max-model-len 8192
+  if [ "$mode" = "speculative" ]; then
+    echo "Using draft model: $metal_draft_model"
+    set -- "$@" --speculative-config "{\"method\":\"draft_model\",\"model\":\"$metal_draft_model\",\"num_speculative_tokens\":$num_speculative_tokens}"
+  fi
+  nohup "$@" >"$log_file" 2>&1 &
   metal_pid=$!
   echo "$metal_pid" > "$pid_file"
   backend="metal"
