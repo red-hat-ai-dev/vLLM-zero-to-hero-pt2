@@ -1,6 +1,6 @@
 # vLLM Zero to Hero: Optimize
 
-### *This is part two in a four part series. Follow the vLLM Zero to Hero [campaign path](https://github.com/red-hat-ai-dev/vLLM-zero-to-hero-overview) to learn more.*
+### *This is part two in a three-part series with optional extra-credit lessons. Follow the vLLM Zero to Hero [campaign path](https://github.com/red-hat-ai-dev/vLLM-zero-to-hero-overview) to learn more.*
 
 Okay, so you've officially become an inference mastermind, serving and talking to your own locally hosted model. 
 What's next from here?
