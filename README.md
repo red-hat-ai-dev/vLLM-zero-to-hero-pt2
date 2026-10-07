@@ -15,6 +15,8 @@ vLLM, and add a draft model for speculative decoding.
 
 ![The optimization pipeline: baseline model, quantization, optimized serving, speculative decoding, and comparison](assets/optimization-pipeline.svg)
 
+See [tested support and validation](SUPPORT.md) for the exact platforms, versions, and remaining checks.
+
 ## What you will learn
 
 - What quantization changes inside a model
@@ -152,6 +154,24 @@ existing checkpoint.
 For a quick path that skips local conversion, use the published Red Hat AI
 checkpoint in the next step by setting `OPTIMIZED_MODEL`.
 
+To choose a fresh output directory or run conversion on CUDA:
+
+```bash
+QUANTIZE_OUTPUT=artifacts/qwen3-fp8-rerun ./quantize.sh
+QUANTIZE_DEVICE=cuda QUANTIZE_OUTPUT=artifacts/qwen3-fp8-cuda ./quantize.sh
+```
+
+`QUANTIZE_DEVICE` defaults to `cpu`. CUDA needs an NVIDIA GPU available to the
+selected engine. `QUANTIZER_BACKEND=local` uses local Python even when a container
+engine is running; `PYTHON` can select Python 3.10–3.13. A failed dependency
+installation is retried on the next run. Direct Python usage also accepts
+`--model`, `--output-dir`, and `--device`.
+
+Conversion writes to a sibling `.incomplete-*` directory and publishes the
+requested path only after file/index/metadata checks pass. Failed staging
+folders remain for diagnosis. File validation does not prove inference support;
+serve the checkpoint in the next steps to check that separately.
+
 ## 3. Serve the baseline model
 
 The launcher detects macOS or Linux and chooses the same family of paths used
@@ -174,7 +194,7 @@ curl http://127.0.0.1:8000/v1/chat/completions \
   -d '{
     "model": "qwen3-4b",
     "messages": [
-      {"role": "user", "content": "Explain quantization in three sentences."}
+      {"role": "user", "content": "Explain LLM weight quantization in three sentences."}
     ]
   }'
 ```
@@ -276,7 +296,8 @@ To remove the vLLM-managed model cache and temporary state, use:
 ./cleanup.sh
 ```
 
-The cleanup script does not remove the local quantizer environment or anything
+The cleanup script keeps the shared vLLM Metal environment, the local quantizer
+environment, and anything
 under `artifacts/`. Generated checkpoints are valuable and can be reused by the
 next run.
 
