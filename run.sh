@@ -27,7 +27,7 @@ requested=""
 accelerator=""
 
 usage() {
-  echo "Usage: ./run.sh [baseline|optimized|speculative] [auto|nvidia|amd|intel|metal]" >&2
+  echo "Usage: ./run.sh [baseline|optimized|speculative] [auto|nvidia|amd|metal]" >&2
   echo >&2
   echo "Examples:" >&2
   echo "  ./run.sh baseline" >&2
@@ -219,19 +219,12 @@ detect_accelerator() {
     accelerator="amd"
   else
     accelerator=""
-    for vendor_file in /sys/class/drm/card*/device/vendor; do
-      [ -r "$vendor_file" ] || continue
-      if [ "$(cat "$vendor_file")" = "0x8086" ]; then
-        accelerator="intel"
-        break
-      fi
-    done
   fi
 
   case "$accelerator" in
-    nvidia|amd|intel) ;;
+    nvidia|amd) ;;
     *)
-      error "No supported NVIDIA, AMD, or Intel accelerator was detected."
+      error "No supported NVIDIA or AMD accelerator was detected."
       echo "Use a supported Linux accelerator or run the baseline on an Apple Silicon Mac." >&2
       exit 1
       ;;
@@ -274,12 +267,6 @@ run_linux() {
   check_port_free
   detect_accelerator
   echo "Detected Linux with $accelerator acceleration."
-  if [ "$accelerator" = "intel" ]; then
-    echo "Note: vLLM validates the Intel XPU path on Arc Pro B-series GPUs only."
-    if [ "$mode" != "baseline" ]; then
-      echo "The optimized and speculative paths are verified on NVIDIA GPUs and may not work on Intel."
-    fi
-  fi
   select_engine
   echo "Using $engine."
 
@@ -302,10 +289,6 @@ run_linux() {
       image="${IMAGE:-docker.io/vllm/vllm-openai-rocm:v0.28.0}"
       set -- --device /dev/kfd --device /dev/dri --group-add video \
         --cap-add SYS_PTRACE --security-opt seccomp=unconfined
-      ;;
-    intel)
-      image="${IMAGE:-docker.io/vllm/vllm-openai-xpu:v0.28.0}"
-      set -- --device /dev/dri:/dev/dri -v /dev/dri/by-path:/dev/dri/by-path --privileged
       ;;
   esac
 
@@ -386,7 +369,7 @@ install_metal() {
 run_macos() {
   case "$requested" in
     auto|metal) ;;
-    nvidia|amd|intel)
+    nvidia|amd)
       error "$requested acceleration through this launcher requires Linux."
       exit 1
       ;;

@@ -110,10 +110,8 @@ The platform paths are:
 | Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a Linux GPU machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
-| Linux with Intel | CPU container or local fallback | XPU container | Serve on a Linux GPU machine |
 
-Linux container access must already work for the detected accelerator. The
-Intel XPU path is validated on Intel Arc Pro B-series GPUs, and the optimized
+Linux container access must already work for the detected accelerator. The optimized
 path is verified on NVIDIA hardware. On a Mac, speculative decoding uses the
 draft-model method with Qwen3-0.6B as the draft. This path is verified on
 Apple Silicon and demonstrates the concept, though it is not yet faster than
@@ -165,8 +163,8 @@ A failed conversion keeps its temporary files and leaves existing checkpoints al
 ## 3. Serve the baseline model
 
 The launcher detects macOS or Linux and chooses the same family of paths used
-in Part 1. On Linux it selects Docker or Podman and the available NVIDIA, AMD,
-or Intel container image.
+in Part 1. On Linux it selects Docker or Podman and the available NVIDIA or AMD
+container image.
 
 ```bash
 ./run.sh baseline
