@@ -6,6 +6,14 @@ image="vllm-zero-to-hero-pt2-quantizer:local"
 llm_compressor_version="0.13.0"
 hf_home="${HF_HOME:-${HOME:-}/.cache/huggingface}"
 engine=""
+output_dir="${QUANTIZE_OUTPUT:-$repo_root/artifacts/Qwen3-4B-FP8-Dynamic}"
+device="${QUANTIZE_DEVICE:-cpu}"
+case "$device" in cpu|cuda) ;; *) echo "Error: QUANTIZE_DEVICE must be cpu or cuda." >&2; exit 1 ;; esac
+case "${QUANTIZER_BACKEND:-auto}" in auto|local) ;; *) echo "Error: QUANTIZER_BACKEND must be auto or local." >&2; exit 1 ;; esac
+if [ "$#" -ne 0 ]; then
+  echo "Use QUANTIZE_OUTPUT, QUANTIZE_DEVICE, and QUANTIZER_BACKEND to configure this wrapper." >&2
+  exit 1
+fi
 
 error() {
   echo "Error: $*" >&2
@@ -34,9 +42,12 @@ if [ -z "$hf_home" ] || [ "$hf_home" = "/" ]; then
   exit 1
 fi
 
-mkdir -p "$repo_root/artifacts" "$hf_home"
+case "$output_dir" in /*) ;; *) output_dir="$repo_root/$output_dir" ;; esac
+mkdir -p "$(dirname "$output_dir")" "$hf_home"
+output_parent="$(CDPATH='' cd "$(dirname "$output_dir")" && pwd)"
+output_name="$(basename "$output_dir")"
 cd "$repo_root"
-select_engine
+if [ "${QUANTIZER_BACKEND:-auto}" != local ]; then select_engine; fi
 
 if [ -n "$engine" ]; then
   echo "Using $engine for the quantizer dependencies."
@@ -48,23 +59,35 @@ if [ -n "$engine" ]; then
     "$repo_root"
 
   volume_suffix=""
-  if [ "$engine" = "podman" ] && [ "$(uname -s)" = "Linux" ]; then
+  if [ "${engine##*/}" = "podman" ] && [ "$(uname -s)" = "Linux" ]; then
     volume_suffix=":Z"
   fi
 
-  echo "Starting the CPU quantization pipeline."
-  "$engine" run --rm -it \
+  set --
+  if [ "$device" = cuda ]; then
+    if [ "${engine##*/}" = podman ]; then
+      set -- --device nvidia.com/gpu=all --security-opt=label=disable
+    else
+      set -- --gpus all
+    fi
+  fi
+  echo "Starting the $device quantization pipeline."
+  "$engine" run --rm "$@" \
     -v "$hf_home:/root/.cache/huggingface$volume_suffix" \
-    -v "$repo_root/artifacts:/workspace/artifacts$volume_suffix" \
-    "$image"
+    -v "$output_parent:/workspace/artifacts$volume_suffix" \
+    "$image" --output-dir "/workspace/artifacts/$output_name" --device "$device"
   exit 0
 fi
 
-echo "No running Docker or Podman was found."
-echo "Using an isolated local Python environment instead."
+echo "Using an isolated local Python environment for quantization."
 python_command=""
-for candidate in python3.13 python3.12 python3.11 python3.10; do
-  if command -v "$candidate" >/dev/null 2>&1; then
+if [ -n "${PYTHON:-}" ]; then
+  set -- "$PYTHON"
+else
+  set -- python3.13 python3.12 python3.11 python3.10 python3
+fi
+for candidate in "$@"; do
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(not ((3, 10) <= sys.version_info[:2] <= (3, 13)))' 2>/dev/null; then
     python_command="$candidate"
     break
   fi
@@ -76,13 +99,17 @@ if [ -z "$python_command" ]; then
   exit 1
 fi
 
-python_version="$($python_command -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
+python_version="$("$python_command" -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')"
 venv="$repo_root/.venv-pt2-quantizer-$python_version"
 
 if [ ! -x "$venv/bin/python" ]; then
   "$python_command" -m venv "$venv"
+fi
+
+# A failed installation leaves the venv behind; retry until the pinned package imports.
+if ! "$venv/bin/python" -c 'import llmcompressor, importlib.metadata as m; assert m.version("llmcompressor") == "0.13.0"' >/dev/null 2>&1; then
   "$venv/bin/python" -m pip install --upgrade pip
   "$venv/bin/python" -m pip install "llmcompressor==$llm_compressor_version"
 fi
 
-"$venv/bin/python" quantize.py
+"$venv/bin/python" quantize.py --output-dir "$output_dir" --device "$device"

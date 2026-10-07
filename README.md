@@ -152,6 +152,16 @@ existing checkpoint.
 For a quick path that skips local conversion, use the published Red Hat AI
 checkpoint in the next step by setting `OPTIMIZED_MODEL`.
 
+To choose a fresh output directory or run conversion on CUDA:
+
+```bash
+QUANTIZE_OUTPUT=artifacts/qwen3-fp8-rerun ./quantize.sh
+QUANTIZE_DEVICE=cuda QUANTIZE_OUTPUT=artifacts/qwen3-fp8-cuda ./quantize.sh
+```
+
+CPU is the default. CUDA needs an NVIDIA GPU available to the container engine.
+A failed conversion keeps its temporary files and leaves existing checkpoints alone.
+
 ## 3. Serve the baseline model
 
 The launcher detects macOS or Linux and chooses the same family of paths used
@@ -276,9 +286,9 @@ To remove the vLLM-managed model cache and temporary state, use:
 ./cleanup.sh
 ```
 
-The cleanup script does not remove the local quantizer environment or anything
-under `artifacts/`. Generated checkpoints are valuable and can be reused by the
-next run.
+The cleanup script keeps the shared vLLM Metal environment, the local quantizer
+environment, and anything under `artifacts/`. Generated checkpoints can be reused
+by the next run.
 
 ## If something goes wrong
 

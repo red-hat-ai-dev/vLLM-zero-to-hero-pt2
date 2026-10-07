@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+script_dir="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
+# shellcheck source=scripts/engine.sh
+. "$script_dir/scripts/engine.sh"
+managed_label="io.github.red-hat-ai-dev.vllm-zero-to-hero-pt2.managed"
+
 name="vllm-zero-to-hero-pt2"
 volume="vllm-zero-to-hero-pt2-models"
 state_dir="${TMPDIR:-/tmp}/vllm-zero-to-hero-pt2"
@@ -32,21 +37,7 @@ esac
 if [ "$#" -gt 1 ]; then echo "Error: too many options." >&2; usage >&2; exit 1; fi
 
 select_engine() {
-  if [ -n "${ENGINE:-}" ]; then
-    if ! command -v "$ENGINE" >/dev/null 2>&1; then
-      echo "Error: ENGINE is set to '$ENGINE', but that command was not found." >&2
-      exit 1
-    fi
-    if ! "$ENGINE" info >/dev/null 2>&1; then
-      echo "Error: $ENGINE is installed but is not running." >&2
-      exit 1
-    fi
-    engine="$ENGINE"
-  elif command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
-    engine="podman"
-  elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    engine="docker"
-  fi
+  resolve_managed_engine "$name" "$managed_label" "${volume:-}"
 }
 
 describe() {
@@ -92,12 +83,12 @@ fi
 echo "  - local quantizer environment and artifacts/: kept"
 echo
 echo "Other Hugging Face models and container images will not be removed."
+echo "The shared vLLM Metal environment is kept."
 confirm
 
-if [ -n "$engine" ]; then ENGINE="$engine" ./stop.sh; else ./stop.sh; fi
+if [ -n "$engine" ]; then ENGINE="$engine" "$script_dir/stop.sh"; else "$script_dir/stop.sh"; fi
 
 if [ "$(uname -s)" = "Darwin" ]; then
-  remove_exact "Metal environment" "$metal_venv" "$metal_venv"
   remove_exact "Part 2 Metal model" "$metal_model_cache" "$metal_model_cache"
   remove_exact "Part 2 model locks" "$metal_model_locks" "$metal_model_locks"
 else

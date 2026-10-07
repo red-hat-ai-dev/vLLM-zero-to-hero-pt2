@@ -84,10 +84,9 @@ backend_is_running() {
 }
 
 wait_until_ready() {
-  attempt=0
+  deadline=$(( $(date +%s) + 1800 ))
   printf "Waiting for vLLM"
-  until curl --fail --silent "http://127.0.0.1:$port/v1/models" >/dev/null 2>&1; do
-    attempt=$((attempt + 1))
+  until curl --connect-timeout 2 --max-time 5 --fail --silent "http://127.0.0.1:$port/v1/models" >/dev/null 2>&1; do
 
     if ! backend_is_running; then
       echo
@@ -97,7 +96,7 @@ wait_until_ready() {
       return 1
     fi
 
-    if [ "$attempt" -ge 360 ]; then
+    if [ "$(date +%s)" -ge "$deadline" ]; then
       echo
       error "vLLM did not become ready within 30 minutes."
       show_recent_logs
@@ -109,6 +108,12 @@ wait_until_ready() {
     sleep 5
   done
 
+  if ! backend_is_running; then
+    error "vLLM stopped before it became ready."
+    show_recent_logs
+    cleanup_started_backend
+    return 1
+  fi
   echo
   trap - INT TERM HUP
   echo "vLLM is ready at http://127.0.0.1:$port/v1"
@@ -258,7 +263,15 @@ prepare_optimized_model() {
   exit 1
 }
 
+check_port_free() {
+  if curl --connect-timeout 2 --max-time 5 --silent --output /dev/null "http://127.0.0.1:$port/v1/models"; then
+    error "An HTTP server already answers on port $port. Stop it or choose PORT."
+    exit 1
+  fi
+}
+
 run_linux() {
+  check_port_free
   detect_accelerator
   echo "Detected Linux with $accelerator acceleration."
   if [ "$accelerator" = "intel" ]; then
@@ -279,7 +292,11 @@ run_linux() {
   case "$accelerator" in
     nvidia)
       image="${IMAGE:-docker.io/vllm/vllm-openai:v0.28.0}"
-      set -- --gpus all
+      if [ "${engine##*/}" = "podman" ]; then
+        set -- --device nvidia.com/gpu=all --security-opt=label=disable
+      else
+        set -- --gpus all
+      fi
       ;;
     amd)
       image="${IMAGE:-docker.io/vllm/vllm-openai-rocm:v0.28.0}"
@@ -395,7 +412,7 @@ run_macos() {
   if [ -f "$pid_file" ]; then
     old_pid="$(cat "$pid_file" 2>/dev/null || true)"
     if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
-      if curl --fail --silent "http://127.0.0.1:$port/v1/models" >/dev/null 2>&1; then
+      if curl --connect-timeout 2 --max-time 5 --fail --silent "http://127.0.0.1:$port/v1/models" >/dev/null 2>&1; then
         echo "vLLM is already ready at http://127.0.0.1:$port/v1"
         return
       fi
@@ -406,6 +423,7 @@ run_macos() {
     rm -f "$pid_file"
   fi
 
+  check_port_free
   echo "Detected Apple Silicon."
   install_metal
   echo "Starting vLLM Metal with $metal_model."
