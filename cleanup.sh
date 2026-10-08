@@ -11,7 +11,6 @@ volume="vllm-zero-to-hero-pt2-models"
 state_dir="${TMPDIR:-/tmp}/vllm-zero-to-hero-pt2"
 user_home="${HOME:-}"
 hf_home="${HF_HOME:-$user_home/.cache/huggingface}"
-metal_venv="$user_home/.venv-vllm-metal"
 metal_model_cache="$hf_home/hub/models--mlx-community--Qwen3-4B-4bit"
 metal_model_locks="$hf_home/hub/.locks/models--mlx-community--Qwen3-4B-4bit"
 assume_yes="false"
@@ -69,7 +68,6 @@ remove_exact() {
 
 if [ "$(uname -s)" = "Darwin" ]; then
   echo "This will stop vLLM and permanently remove:"
-  describe "Metal environment" "$metal_venv"
   describe "Part 2 Metal model" "$metal_model_cache"
   describe "Part 2 model locks" "$metal_model_locks"
   describe "temporary state" "$state_dir"

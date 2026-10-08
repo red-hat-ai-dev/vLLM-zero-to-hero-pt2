@@ -13,7 +13,10 @@ This is how the pipeline is going to look:
 you start with a baseline model, create a compressed checkpoint, serve it with
 vLLM, and add a draft model for speculative decoding.
 
-![The optimization pipeline: baseline model, quantization, optimized serving, speculative decoding, and comparison](assets/optimization-pipeline.svg)
+![The optimization pipeline: baseline model, quantization, optimized serving, speculative decoding, and comparison](docs/assets/optimization-pipeline.svg)
+
+Want to know what the scripts are doing? Read
+[Behind the scenes](docs/BEHIND_THE_SCENES.md).
 
 ## What you will learn
 
@@ -53,7 +56,7 @@ Post-training quantization (PTQ) applies that transformation after the model
 has already been trained. This tutorial uses a data-free FP8 dynamic scheme,
 so it does not require a calibration dataset.
 
-![A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4, showing fewer bits per value](assets/quantization-precision.svg)
+![A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4, showing fewer bits per value](docs/assets/quantization-precision.svg)
 
 The sizes in this diagram are approximate storage comparisons for the values
 themselves. Real checkpoints also contain scales, metadata, and layers that may
@@ -84,7 +87,7 @@ The process is lossless when implemented correctly: the target model still
 decides which tokens are accepted. The draft model is there to reduce the
 number of expensive target-model steps, not to replace the target model.
 
-![Speculative decoding: a draft model proposes tokens and the target model verifies them](assets/speculative-decoding.svg)
+![Speculative decoding: a draft model proposes tokens and the target model verifies them](docs/assets/speculative-decoding.svg)
 
 This part uses the published
 [RedHatAI/Qwen3-4B-speculator.dspark](https://huggingface.co/RedHatAI/Qwen3-4B-speculator.dspark)
