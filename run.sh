@@ -14,6 +14,7 @@ metal_draft_model="${METAL_DRAFT_MODEL:-Qwen/Qwen3-0.6B}"
 baseline_model="${BASELINE_MODEL:-Qwen/Qwen3-4B}"
 optimized_default="$repo_root/artifacts/Qwen3-4B-FP8-Dynamic"
 served_model="${MODEL_NAME:-qwen3-4b}"
+max_model_len="8192"
 speculator_model="${SPECULATOR_MODEL:-RedHatAI/Qwen3-4B-speculator.dspark}"
 num_speculative_tokens="${NUM_SPECULATIVE_TOKENS:-3}"
 managed_label="io.github.red-hat-ai-dev.vllm-zero-to-hero-pt2.managed"
@@ -27,7 +28,7 @@ requested=""
 accelerator=""
 
 usage() {
-  echo "Usage: ./run.sh [baseline|optimized|speculative] [auto|nvidia|amd|metal]" >&2
+  echo "Usage: ./run.sh [baseline|optimized|speculative] [auto|nvidia|amd|metal|cpu]" >&2
   echo >&2
   echo "Examples:" >&2
   echo "  ./run.sh baseline" >&2
@@ -222,10 +223,10 @@ detect_accelerator() {
   fi
 
   case "$accelerator" in
-    nvidia|amd) ;;
+    nvidia|amd|cpu) ;;
     *)
       error "No supported NVIDIA or AMD accelerator was detected."
-      echo "Use a supported Linux accelerator or run the baseline on an Apple Silicon Mac." >&2
+      echo "Use NVIDIA or AMD, choose cpu explicitly, or run on an Apple Silicon Mac." >&2
       exit 1
       ;;
   esac
@@ -290,6 +291,19 @@ run_linux() {
       set -- --device /dev/kfd --device /dev/dri --group-add video \
         --cap-add SYS_PTRACE --security-opt seccomp=unconfined
       ;;
+    cpu)
+      if [ "$(uname -m)" != "x86_64" ]; then
+        error "The CPU example currently requires an x86-64 Linux environment."
+        exit 1
+      fi
+      if [ "$mode" != "baseline" ]; then
+        error "The CPU example currently supports baseline serving only."
+        exit 1
+      fi
+      image="docker.io/vllm/vllm-openai-cpu:v0.28.0-x86_64"
+      max_model_len="4096"
+      set -- -e VLLM_CPU_KVCACHE_SPACE=1 -e VLLM_CPU_NUM_OF_RESERVED_CPU=1
+      ;;
   esac
 
   case "$mode" in
@@ -321,7 +335,11 @@ run_linux() {
     --host 0.0.0.0 \
     --port 8000 \
     --served-model-name "$served_model" \
-    --max-model-len 8192
+    --max-model-len "$max_model_len"
+
+  if [ "$accelerator" = "cpu" ]; then
+    set -- "$@" --dtype bfloat16 --max-num-seqs 4 --enforce-eager
+  fi
 
   if [ "$mode" = "speculative" ]; then
     speculative_config="{\"method\":\"dspark\",\"model\":\"$speculator_model\",\"num_speculative_tokens\":$num_speculative_tokens}"
@@ -369,7 +387,7 @@ install_metal() {
 run_macos() {
   case "$requested" in
     auto|metal) ;;
-    nvidia|amd)
+    nvidia|amd|cpu)
       error "$requested acceleration through this launcher requires Linux."
       exit 1
       ;;
