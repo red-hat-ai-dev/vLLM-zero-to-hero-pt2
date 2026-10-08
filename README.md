@@ -110,6 +110,7 @@ The platform paths are:
 | Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a Linux GPU machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
+| x86-64 CPU (experimental) | CPU container or local fallback | CPU container | Not enabled for CPU |
 
 Linux container access must already work for the detected accelerator. The optimized
 path is verified on NVIDIA hardware. On a Mac, speculative decoding uses the
@@ -123,6 +124,13 @@ a compatible WSL2 environment.
 The quantizer and the vLLM server are separate pieces. You can create the
 checkpoint on a CPU-only machine, copy it to a Linux GPU machine, and serve it
 there.
+
+For experimental CPU serving, use `./run.sh baseline cpu` in an x86-64 Linux
+runtime with Docker or Podman. This option serves the baseline only, with a
+4,096-token context and at most four concurrent requests. Stop and cleanup
+work as usual.
+
+You can still create the FP8 checkpoint on CPU, then serve it on a GPU.
 
 ## 1. Clone
 
