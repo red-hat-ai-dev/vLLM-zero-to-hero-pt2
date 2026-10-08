@@ -10,7 +10,7 @@ WORKDIR /workspace
 RUN python -m pip install --no-cache-dir \
     "llmcompressor==${LLM_COMPRESSOR_VERSION}"
 
-COPY quantize.py /workspace/quantize.py
+COPY scripts/quantize.py /workspace/quantize.py
 ENTRYPOINT ["python", "/workspace/quantize.py"]
 
 FROM ${VLLM_IMAGE} AS serving

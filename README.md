@@ -13,7 +13,10 @@ This is how the pipeline is going to look:
 you start with a baseline model, create a compressed checkpoint, serve it with
 vLLM, and add a draft model for speculative decoding.
 
-![The optimization pipeline: baseline model, quantization, optimized serving, speculative decoding, and comparison](assets/optimization-pipeline.svg)
+![The optimization pipeline: baseline model, quantization, optimized serving, speculative decoding, and comparison](docs/assets/optimization-pipeline.svg)
+
+Want to know what the scripts are doing? Read
+[Behind the scenes](docs/BEHIND_THE_SCENES.md).
 
 ## What you will learn
 
@@ -53,7 +56,7 @@ Post-training quantization (PTQ) applies that transformation after the model
 has already been trained. This tutorial uses a data-free FP8 dynamic scheme,
 so it does not require a calibration dataset.
 
-![A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4, showing fewer bits per value](assets/quantization-precision.svg)
+![A conceptual progression from FP32 to BF16 or FP16, FP8, and INT4, showing fewer bits per value](docs/assets/quantization-precision.svg)
 
 The sizes in this diagram are approximate storage comparisons for the values
 themselves. Real checkpoints also contain scales, metadata, and layers that may
@@ -84,7 +87,7 @@ The process is lossless when implemented correctly: the target model still
 decides which tokens are accepted. The draft model is there to reduce the
 number of expensive target-model steps, not to replace the target model.
 
-![Speculative decoding: a draft model proposes tokens and the target model verifies them](assets/speculative-decoding.svg)
+![Speculative decoding: a draft model proposes tokens and the target model verifies them](docs/assets/speculative-decoding.svg)
 
 This part uses the published
 [RedHatAI/Qwen3-4B-speculator.dspark](https://huggingface.co/RedHatAI/Qwen3-4B-speculator.dspark)
@@ -107,7 +110,7 @@ The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a Linux GPU machine |
+| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a CUDA machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
 | x86-64 CPU (experimental) | CPU container or local fallback | CPU container | Not enabled for CPU |
@@ -122,7 +125,7 @@ configured for Docker or Podman. Windows users can follow the Linux path from
 a compatible WSL2 environment.
 
 The quantizer and the vLLM server are separate pieces. You can create the
-checkpoint on a CPU-only machine, copy it to a Linux GPU machine, and serve it
+checkpoint on a CPU-only machine, copy it to a CUDA machine, and serve it
 there.
 
 For experimental CPU serving, use `./run.sh baseline cpu` in an x86-64 Linux

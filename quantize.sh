@@ -53,6 +53,7 @@ if [ -n "$engine" ]; then
   echo "Using $engine for the quantizer dependencies."
   echo "Building or reusing the local quantizer image..."
   "$engine" build \
+    --file "$repo_root/scripts/Dockerfile" \
     --target quantizer \
     --build-arg "LLM_COMPRESSOR_VERSION=$llm_compressor_version" \
     --tag "$image" \
@@ -112,4 +113,4 @@ if ! "$venv/bin/python" -c 'import llmcompressor, importlib.metadata as m; asser
   "$venv/bin/python" -m pip install "llmcompressor==$llm_compressor_version"
 fi
 
-"$venv/bin/python" quantize.py --output-dir "$output_dir" --device "$device"
+"$venv/bin/python" "$repo_root/scripts/quantize.py" --output-dir "$output_dir" --device "$device"
