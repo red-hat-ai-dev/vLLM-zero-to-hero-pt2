@@ -110,7 +110,7 @@ The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a Linux GPU machine |
+| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a CUDA machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
 | x86-64 CPU (experimental) | CPU container or local fallback | CPU container | Not enabled for CPU |
@@ -125,7 +125,7 @@ configured for Docker or Podman. Windows users can follow the Linux path from
 a compatible WSL2 environment.
 
 The quantizer and the vLLM server are separate pieces. You can create the
-checkpoint on a CPU-only machine, copy it to a Linux GPU machine, and serve it
+checkpoint on a CPU-only machine, copy it to a CUDA machine, and serve it
 there.
 
 For experimental CPU serving, use `./run.sh baseline cpu` in an x86-64 Linux

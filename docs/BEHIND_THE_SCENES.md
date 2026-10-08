@@ -60,7 +60,7 @@ The launcher chooses a backend, starts vLLM, and waits for `/v1/models` to
 answer. The default API is `http://127.0.0.1:8000/v1`, and the model is exposed
 as `qwen3-4b` so the request in the walkthrough works across the paths.
 
-| Mode | Linux GPU path | Apple Silicon path |
+| Mode | CUDA path | Apple Silicon path |
 | --- | --- | --- |
 | `baseline` | `Qwen/Qwen3-4B` | `mlx-community/Qwen3-4B-4bit` through vLLM Metal |
 | `optimized` | Your local FP8 checkpoint, or the model selected by `OPTIMIZED_MODEL` | This mode is not enabled in Part 2. |
@@ -68,7 +68,8 @@ as `qwen3-4b` so the request in the walkthrough works across the paths.
 
 Part 2's Mac baseline is already a four-bit MLX checkpoint. Part 3 uses a
 different Mac comparison: BF16 versus four-bit MLX. The FP8 checkpoint created
-here is for the Linux GPU path.
+here is used by the CUDA path. ROCm has a separate container path; its
+hardware validation is still pending in the RFC.
 
 ### Linux containers and CPU
 
@@ -93,7 +94,7 @@ installing the official stable release if it is missing. Set `VLLM_METAL_VENV`
 to use an existing environment instead. The server runs in the background;
 its PID and log are in `${TMPDIR:-/tmp}/vllm-zero-to-hero-pt2/`.
 
-Linux speculation uses the `dspark` method. Metal uses `draft_model` with a
+CUDA speculation uses the `dspark` method. Metal uses `draft_model` with a
 separate small draft model. The default proposal length is three tokens,
 controlled by `NUM_SPECULATIVE_TOKENS`. The draft can be selected with
 `SPECULATOR_MODEL` on Linux or `METAL_DRAFT_MODEL` on Mac.
