@@ -73,10 +73,17 @@ if [ -n "$engine" ]; then
     fi
   fi
   echo "Starting the $device quantization pipeline."
+  # The file's owner inside the bind mount accounts for rootless ID mapping.
+  owner_reference="$(mktemp "$output_parent/.pt2-quantizer-owner.XXXXXXXXXX")"
+  trap 'rm -f -- "$owner_reference"' EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
   "$engine" run --rm "$@" \
     -v "$hf_home:/root/.cache/huggingface$volume_suffix" \
     -v "$output_parent:/workspace/artifacts$volume_suffix" \
-    "$image" --output-dir "/workspace/artifacts/$output_name" --device "$device"
+    "$image" --output-dir "/workspace/artifacts/$output_name" --device "$device" \
+    --owner-reference "/workspace/artifacts/${owner_reference##*/}"
   exit 0
 fi
 
