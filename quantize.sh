@@ -43,7 +43,7 @@ if [ -z "$hf_home" ] || [ "$hf_home" = "/" ]; then
 fi
 
 case "$output_dir" in /*) ;; *) output_dir="$repo_root/$output_dir" ;; esac
-mkdir -p "$(dirname "$output_dir")" "$hf_home"
+mkdir -p "$(dirname "$output_dir")"
 output_parent="$(CDPATH='' cd "$(dirname "$output_dir")" && pwd)"
 output_name="$(basename "$output_dir")"
 cd "$repo_root"
@@ -60,8 +60,16 @@ if [ -n "$engine" ]; then
     "$repo_root"
 
   volume_suffix=""
-  if [ "${engine##*/}" = "podman" ] && [ "$(uname -s)" = "Linux" ]; then
-    volume_suffix=":Z"
+  if [ "$(uname -s)" = "Linux" ]; then
+    # Share the serving volume so a rootful engine never writes to the learner's cache.
+    # shellcheck source=scripts/engine.sh
+    . "$repo_root/scripts/engine.sh"
+    ensure_model_volume
+    cache_source="$volume"
+    if [ "${engine##*/}" = "podman" ]; then volume_suffix=":Z"; fi
+  else
+    mkdir -p "$hf_home"
+    cache_source="$hf_home"
   fi
 
   set --
@@ -80,7 +88,7 @@ if [ -n "$engine" ]; then
   trap 'exit 130' INT
   trap 'exit 143' TERM
   "$engine" run --rm "$@" \
-    -v "$hf_home:/root/.cache/huggingface$volume_suffix" \
+    -v "$cache_source:/root/.cache/huggingface" \
     -v "$output_parent:/workspace/artifacts$volume_suffix" \
     "$image" --output-dir "/workspace/artifacts/$output_name" --device "$device" \
     --owner-reference "/workspace/artifacts/${owner_reference##*/}"
@@ -88,6 +96,7 @@ if [ -n "$engine" ]; then
 fi
 
 echo "Using an isolated local Python environment for quantization."
+mkdir -p "$hf_home"
 python_command=""
 if [ -n "${PYTHON:-}" ]; then
   set -- "$PYTHON"

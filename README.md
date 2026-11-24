@@ -110,7 +110,7 @@ The platform paths are:
 
 | Platform | Quantization | Baseline serving | Optimized and speculative serving |
 | --- | --- | --- | --- |
-| Apple Silicon Mac | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a CUDA machine |
+| Apple Silicon Mac (macOS 15+) | CPU container or local fallback | Native vLLM Metal | Draft-model speculative on Metal; optimized on a CUDA machine |
 | Linux with NVIDIA | CPU container or local fallback | CUDA container | CUDA container; primary path for this part |
 | Linux with AMD | CPU container or local fallback | ROCm container | Try with the current vLLM ROCm support and verify locally |
 | x86-64 CPU (experimental) | CPU container or local fallback | CPU container | Not enabled for CPU |
@@ -190,7 +190,7 @@ instead. On an Apple Silicon Mac, the default command starts vLLM Metal with
 the four-bit MLX Qwen3-4B checkpoint. On Linux, it starts `Qwen/Qwen3-4B` in the matching
 accelerator container.
 
-When the API is ready, send a request from a second terminal:
+When the API is ready, the launcher returns to the prompt. Send a request from the same terminal:
 
 ```bash
 curl http://127.0.0.1:8000/v1/chat/completions \

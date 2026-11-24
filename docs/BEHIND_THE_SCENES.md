@@ -25,8 +25,11 @@ as part of the repository.
 The wrapper first looks for a running Podman or Docker engine. It builds the
 `quantizer` stage in [`scripts/Dockerfile`](../scripts/Dockerfile), which
 installs LLM Compressor 0.13.0 and copies in
-[`scripts/quantize.py`](../scripts/quantize.py). The model cache and output
-directory are mounted into that container.
+[`scripts/quantize.py`](../scripts/quantize.py). The output directory is mounted
+into the container. On Linux, the quantizer shares Part 2's labeled model volume
+with serving on the same engine. Your personal Hugging Face cache stays available
+to tools such as Part 3's evaluation client. On a Mac, the container mounts your
+Hugging Face cache directly.
 
 If neither engine is running, it creates a local Python environment using
 Python 3.10 through 3.13. The environment is named
