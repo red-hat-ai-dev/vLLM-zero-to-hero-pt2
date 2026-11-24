@@ -89,7 +89,7 @@ number of expensive target-model steps, not to replace the target model.
 
 ![Speculative decoding: a draft model proposes tokens and the target model verifies them](docs/assets/speculative-decoding.svg)
 
-This part uses the published
+The Linux GPU path uses the published
 [RedHatAI/Qwen3-4B-speculator.dspark](https://huggingface.co/RedHatAI/Qwen3-4B-speculator.dspark)
 artifact. It is paired with the Qwen3-4B target model, including the FP8
 target checkpoint created in this tutorial.
@@ -159,7 +159,7 @@ file count, size, format, and location. It intentionally does not overwrite an
 existing checkpoint.
 
 For a quick path that skips local conversion, use the published Red Hat AI
-checkpoint in the next step by setting `OPTIMIZED_MODEL`.
+checkpoint for the Linux GPU commands in steps 4 and 5.
 
 To choose a fresh output directory or run conversion on CUDA:
 
@@ -170,6 +170,10 @@ QUANTIZE_DEVICE=cuda QUANTIZE_OUTPUT=artifacts/qwen3-fp8-cuda ./quantize.sh
 
 CPU is the default. CUDA needs an NVIDIA GPU available to the container engine.
 A failed conversion keeps its temporary files and leaves existing checkpoints alone.
+If you chose a custom output, set `OPTIMIZED_MODEL` to its absolute path in the
+same shell before steps 4 and 5. For the first example above, run
+`export OPTIMIZED_MODEL="$PWD/artifacts/qwen3-fp8-rerun"`. Both serving
+commands will then use that checkpoint.
 
 ## 3. Serve the baseline model
 
@@ -181,8 +185,9 @@ container image.
 ./run.sh baseline
 ```
 
-On an Apple Silicon Mac, this starts the native vLLM Metal path with an MLX
-Qwen3-4B checkpoint. On Linux, it starts `Qwen/Qwen3-4B` in the matching
+On an x86-64 Linux machine using CPU only, start with `./run.sh baseline cpu`
+instead. On an Apple Silicon Mac, the default command starts vLLM Metal with
+the four-bit MLX Qwen3-4B checkpoint. On Linux, it starts `Qwen/Qwen3-4B` in the matching
 accelerator container.
 
 When the API is ready, send a request from a second terminal:
@@ -201,9 +206,14 @@ curl http://127.0.0.1:8000/v1/chat/completions \
 The API is also available at `http://127.0.0.1:8000/v1` for any OpenAI-
 compatible client.
 
-## 4. Serve the optimized model
+## 4. Serve the optimized model on a Linux GPU
 
-Stop the baseline server first:
+**Apple Silicon:** continue to step 5 to try draft-model speculation with the
+same MLX checkpoint. **CPU only:** keep the baseline running and use the request
+in step 6. You can copy the checkpoint from step 2 to a CUDA machine for the
+optimized and speculative runs.
+
+On a Linux GPU, stop the baseline server first:
 
 ```bash
 ./stop.sh
@@ -227,29 +237,28 @@ not download the same files again.
 
 ## 5. Add speculative decoding
 
-Stop the optimized server, then start the target model with the matching draft
-model:
+On **Apple Silicon or a Linux GPU**, stop the previous server, then start the
+speculative server. CPU-only learners can continue to step 6.
 
 ```bash
 ./stop.sh
 ./run.sh speculative
 ```
 
-This uses the local FP8 checkpoint by default. To use the published target
-instead:
+On a Mac, this serves the same four-bit MLX checkpoint with `Qwen/Qwen3-0.6B`
+as its draft. Use `"temperature": 0` to exercise speculation. You can select
+another compatible draft with `METAL_DRAFT_MODEL`. Metal 0.33.0 also documents
+experimental DSpark support for matched Qwen3 checkpoints. [Upstream DSpark guide](https://github.com/vllm-project/vllm-metal/blob/v0.33.0/docs/dspark.md)
+
+On a Linux GPU, the launcher uses the local FP8 checkpoint by default. To use
+the published FP8 target:
 
 ```bash
 OPTIMIZED_MODEL=RedHatAI/Qwen3-4B-FP8-dynamic ./run.sh speculative
 ```
 
-On an Apple Silicon Mac, `./run.sh speculative` instead runs the baseline
-model with Qwen3-0.6B as the draft (the dspark speculator is not supported on
-vLLM Metal yet). The draft can be changed with `METAL_DRAFT_MODEL`. Only
-greedy requests are drafted on Metal, so set `"temperature": 0` in your
-requests to see speculation happen.
-
-The draft model can be changed with `SPECULATOR_MODEL` and the proposal length
-with `NUM_SPECULATIVE_TOKENS`:
+Use `SPECULATOR_MODEL` to choose a different compatible Linux GPU draft and
+`NUM_SPECULATIVE_TOKENS` to set its proposal length:
 
 ```bash
 SPECULATOR_MODEL=RedHatAI/Qwen3-4B-speculator.dspark \
@@ -259,9 +268,10 @@ NUM_SPECULATIVE_TOKENS=3 \
 
 ## 6. Compare the result
 
-Send the same request to the baseline, optimized, and speculative servers. Pay
-attention to whether the responses remain sensible and how the experience
-changes on your hardware. Part 3 will cover controlled endpoint benchmarking
+Send the request below to each mode available on your hardware. On a Linux
+GPU, compare baseline, optimized, and speculative serving. On a Mac, compare
+baseline and speculative serving. On CPU, use the request to check your
+baseline. Pay attention to the responses and how long they take. Part 3 will cover controlled endpoint benchmarking
 in depth with GuideLLM.
 
 ```bash
@@ -279,7 +289,7 @@ curl http://127.0.0.1:8000/v1/chat/completions \
 Setting `"temperature": 0` matters on Metal, where only greedy requests are
 drafted; other requests run without speculation.
 
-Stop the server, start `optimized` or `speculative`, and repeat the command.
+Use `./stop.sh` between modes and repeat the same request after each start.
 
 ## Stop and clean up
 
@@ -289,15 +299,16 @@ Stop the current server with:
 ./stop.sh
 ```
 
-To remove the vLLM-managed model cache and temporary state, use:
+To preview and remove the resources owned by this lesson, run:
 
 ```bash
 ./cleanup.sh
 ```
 
-The cleanup script keeps the shared vLLM Metal environment, the local quantizer
-environment, and anything under `artifacts/`. Generated checkpoints can be reused
-by the next run.
+On Linux, cleanup removes the Part 2 container and its labeled model volume.
+On a Mac, the shared Hugging Face cache keeps both the target and draft models
+for later use. The shared Metal environment, local quantizer environment, and
+checkpoints in `artifacts/` are also kept.
 
 ## If something goes wrong
 

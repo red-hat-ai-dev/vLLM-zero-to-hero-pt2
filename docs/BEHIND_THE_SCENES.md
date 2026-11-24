@@ -79,7 +79,9 @@ An explicit `ENGINE` must also be running and meet the NVIDIA integration
 checks when applicable.
 
 The container port is published only on the host's loopback address. Downloaded
-models are stored in the `vllm-zero-to-hero-pt2-models` volume. A local optimized
+models are stored in the labeled `vllm-zero-to-hero-pt2-models-v2` volume.
+An upgrade leaves the older unlabeled cache in place and downloads models into
+the new volume on first use. A local optimized
 checkpoint is mounted read-only at `/models/optimized`.
 
 `./run.sh baseline cpu` explicitly chooses the official x86-64 CPU image. It
@@ -94,7 +96,7 @@ installing the official stable release if it is missing. Set `VLLM_METAL_VENV`
 to use an existing environment instead. The server runs in the background;
 its PID and log are in `${TMPDIR:-/tmp}/vllm-zero-to-hero-pt2/`.
 
-CUDA speculation uses the `dspark` method. Metal uses `draft_model` with a
+The lesson selects `dspark` on CUDA and `draft_model` on Metal with a
 separate small draft model. The default proposal length is three tokens,
 controlled by `NUM_SPECULATIVE_TOKENS`. The draft can be selected with
 `SPECULATOR_MODEL` on Linux or `METAL_DRAFT_MODEL` on Mac.
@@ -115,13 +117,16 @@ container. It keeps model downloads for the next start.
 [`scripts/engine.sh`](../scripts/engine.sh) helps `stop.sh` and `cleanup.sh`
 find the container engine that owns this lesson's resources. If separate
 resources exist in both engines, it asks you to select `ENGINE`. It also checks
-the container's project label before allowing removal.
+the ownership labels before removing containers or model volumes.
 
-After confirmation, `cleanup.sh` removes the serving container and model
-volume on Linux, or the default Part 2 Metal model cache on Mac, plus temporary
-state. It keeps the shared Metal environment, the local quantizer environment,
-container images, and `artifacts/`. The draft model and custom model caches are
-also kept on Mac. Cleanup stops if it cannot stop the server.
+After confirmation, `cleanup.sh` removes Part 2's temporary state and, on
+Linux, its owned container and model volume. On Mac it checks the recorded
+process identity before stopping the server. Hugging Face caches, including
+the MLX target and the draft, remain available to other apps. Cleanup also
+keeps the Metal and quantizer environments, container images, and `artifacts/`.
+
+If you upgrade while an older Metal server is running, stop it from the checkout
+that launched it before starting the new version.
 
 ## Building the images
 
