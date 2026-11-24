@@ -50,6 +50,9 @@ to a temporary sibling directory. The script checks the compressed-tensors
 metadata, weight files, shard index when needed, and tokenizer configuration
 before moving the completed checkpoint into place. A nonempty existing output
 is refused. Failed conversions leave their temporary directory for diagnosis.
+For container runs, the wrapper creates a temporary file alongside the output
+as a reference for your user and group. The quantizer gives the generated
+files that ownership so you can inspect or copy them after the container exits.
 
 These checks establish that the expected files exist. Loading the model and
 measuring its answers are separate checks, covered by serving and Part 3.
