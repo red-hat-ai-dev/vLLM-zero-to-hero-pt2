@@ -335,4 +335,6 @@ attach model weights or access tokens.
 
 ---
 
+After stopping the server, run `cd ..` from the Part 2 directory and follow the clone instructions in [Part 3 — Benchmark](https://github.com/red-hat-ai-dev/vLLM-zero-to-hero-pt3). Keeping the checkouts side by side lets you use Part 3’s example path to your FP8 checkpoint on NVIDIA.
+
 [Back to the vLLM Zero to Hero overview](https://github.com/red-hat-ai-dev/vLLM-zero-to-hero-overview)
